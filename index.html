@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Distributed System - RMI</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0d0d0f;
+      color: #e5e5e5;
+      overflow:hidden;
+    }
+
+    /* Snow canvas */
+    #snow {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .container {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      height: 100vh;
+    }
+
+    .calc-panel {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .history-panel {
+      flex: 1;
+      background: #131316;
+      border-left: 1px solid #222;
+      padding: 20px;
+      overflow-y: auto;
+      min-width: 200px;
+      max-width: 300px;
+      resize: horizontal;
+      overflow: auto;
+      box-sizing: border-box;
+    }
+
+    .history-panel h4{
+        position: absolute;
+        bottom: 0;
+    }
+
+    h1 {
+      margin-bottom: 15px;
+      font-size: 28px;
+      font-weight: 600;
+    }
+
+    .calc-box {
+      background: #1a1a1d;
+      padding: 25px;
+      border-radius: 12px;
+      width: 350px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      box-shadow: 0 0 15px #00000050;
+    }
+
+    input, select, button {
+      padding: 12px;
+      border-radius: 8px;
+      background: #111114;
+      border: 1px solid #333;
+      color: #e5e5e5;
+      font-size: 16px;
+    }
+
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+
+    button {
+      cursor: pointer;
+      background: #4e4eff;
+      border: none;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #6f6fff;
+    }
+
+    .result {
+      margin-top: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .history-item {
+      background: #1c1c20;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #29292d;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="snow"></canvas>
+
+  <div class="container">
+    <div class="history-panel" id="teamPanel" style="border-left:none; border-right:1px solid #222;">
+      <div id="teamContent">
+        <h2>Team Members</h2>
+        <div id="teamItems">
+          <div class="history-item">Tang Nakry</div>
+          <div class="history-item">Tak Toek</div>
+          <div class="history-item">Soth Pichpanha</div>
+          <div class="history-item">Chantha Mengkong</div>
+          <div class="history-item">Thou Thearo</div>
+        </div>
+        <h4 class="footer_title">RMI - Mini Project</h4>
+      </div>
+    </div>
+
+    <div class="calc-panel">
+      <h1>Distributed Calculator</h1>
+      <div class="calc-box">
+        <input type="number" id="num1" placeholder="Enter first number" />
+        <input type="number" id="num2" placeholder="Enter second number" />
+        <select id="operator">
+          <option value="add">Addition (+)</option>
+          <option value="sub">Subtract (-)</option>
+          <option value="mul">Multiply (×)</option>
+          <option value="div">Divide (÷)</option>
+          <option value="pow">Power (^)</option>
+          <option value="mod">Modulo (%)</option>
+        </select>
+        <button onclick="calculate()">Calculate</button>
+        <div class="result" id="resultDisplay">Result: NA</div>
+      </div>
+    </div>
+
+    <div class="history-panel" id="historyPanel">
+      <div id="historyContent">
+        <h2>History</h2>
+        <div id="historyItems"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function calculate() {
+      const a = parseFloat(document.getElementById('num1').value);
+      const b = parseFloat(document.getElementById('num2').value);
+      const op = document.getElementById('operator').value;
+      let r;
+
+      switch(op){
+        case 'add': r = a + b; break;
+        case 'sub': r = a - b; break;
+        case 'mul': r = a * b; break;
+        case 'div': r = b !== 0 ? a / b : 'Error'; break;
+        case 'pow': r = Math.pow(a, b); break;
+        case 'mod': r = a % b; break;
+      }
+
+      document.getElementById('resultDisplay').innerText = 'Result: ' + r;
+
+      const h = document.getElementById('historyItems');
+      const box = document.createElement('div');
+      box.className = 'history-item';
+      if (op === 'add') box.innerText = `${a} + ${b} = ${r}`;
+      else if (op === 'sub') box.innerText = `${a} - ${b} = ${r}`;
+      else if (op === 'mul') box.innerText = `${a} × ${b} = ${r}`;
+      else if (op === 'div') box.innerText = `${a} ÷ ${b} = ${r}`;
+      else if (op === 'pow') box.innerText = `${a} ^ ${b} = ${r}`;
+      else if (op === 'mod') box.innerText = `${a} % ${b} = ${r}`;
+      h.prepend(box);
+    }
+
+
+    // Snow animation
+    const canvas = document.getElementById("snow");
+    const ctx = canvas.getContext("2d");
+    let W, H;
+    let snowflakes = [];
+
+    function resize(){
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+
+    window.onresize = resize;
+    resize();
+
+    function createSnow(){
+      for(let i = 0; i < 150; i++){
+        snowflakes.push({
+          x: Math.random()*W,
+          y: Math.random()*H,
+          r: Math.random()*3 + 1,
+          d: Math.random()+1
+        });
+      }
+    }
+
+    function drawSnow(){
+      ctx.clearRect(0,0,W,H);
+
+      ctx.fillStyle = "white";
+      ctx.beginPath();
+      for(let i = 0; i < snowflakes.length; i++){
+        let f = snowflakes[i];
+        ctx.moveTo(f.x, f.y);
+        ctx.arc(f.x, f.y, f.r, 0, Math.PI*2, true);
+      }
+      ctx.fill();
+      updateSnow();
+    }
+
+    function updateSnow(){
+      for(let i = 0; i < snowflakes.length; i++){
+        let f = snowflakes[i];
+        f.y += Math.pow(f.d, 2) + 1;
+        if(f.y > H){ f.y = 0; f.x = Math.random()*W; }
+      }
+    }
+
+    createSnow();
+    setInterval(drawSnow, 33);
+  </script>
+</body>
+</html>
